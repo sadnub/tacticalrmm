@@ -13,10 +13,7 @@ jobs:
       - name: Get Github Tag
         id: prep
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-            echo ::set-output name=version::${VERSION}
-          fi
+          echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
