@@ -17,8 +17,6 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
-        env:
-          INPUT_TAGS: ${{ steps.prep.outputs.version }}, latest
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -38,6 +36,7 @@ jobs:
           file: ./docker/containers/tactical/dockerfile
           platforms: linux/amd64
           repository: sadnub/tactical
+          tags: ${{ steps.prep.outputs.version }},latest
           
       - name: Build and Push Tactical MeshCentral Image
         uses: docker/build-push-action@v2
@@ -48,6 +47,7 @@ jobs:
           file: ./docker/containers/tactical-meshcentral/dockerfile
           platforms: linux/amd64
           repository: sadnub/tactical-meshcentral
+          tags: ${{ steps.prep.outputs.version }},latest
           
       - name: Build and Push Tactical NATS Image
         uses: docker/build-push-action@v2
@@ -58,6 +58,7 @@ jobs:
           file: ./docker/containers/tactical-nats/dockerfile
           platforms: linux/amd64
           repository: sadnub/tactical-nats
+          tags: ${{ steps.prep.outputs.version }},latest
           
       - name: Build and Push Tactical Salt Image
         uses: docker/build-push-action@v2
@@ -68,6 +69,7 @@ jobs:
           file: ./docker/containers/tactical-salt/dockerfile
           platforms: linux/amd64
           repository: sadnub/tactical-salt
+          tags: ${{ steps.prep.outputs.version }},latest
           
       - name: Build and Push Tactical Frontend Image
         uses: docker/build-push-action@v2
@@ -78,6 +80,7 @@ jobs:
           file: ./docker/containers/tactical-frontend/dockerfile
           platforms: linux/amd64
           repository: sadnub/tactical-frontend
+          tags: ${{ steps.prep.outputs.version }},latest
           
       - name: Build and Push Tactical Nginx Image
         uses: docker/build-push-action@v2
@@ -88,3 +91,4 @@ jobs:
           file: ./docker/containers/tactical-nginx/dockerfile
           platforms: linux/amd64
           repository: sadnub/tactical-nginx
+          tags: ${{ steps.prep.outputs.version }},latest
