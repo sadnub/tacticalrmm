@@ -1,25 +1,20 @@
 import axios from "axios";
+import { boot } from "quasar/wrappers";
 import { Notify } from "quasar";
 
 export const getBaseUrl = () => {
-  if (process.env.NODE_ENV === "production") {
-    if (process.env.DOCKER_BUILD) {
-      return window._env_.PROD_URL;
-    } else {
-      return process.env.PROD_API;
-    }
+  if (process.env.NODE_ENV === "production" && process.env.DOCKER_BUILD) {
+    return window._env_.PROD_URL;
   } else {
-    return process.env.DEV_API;
+    return process.env.API_URL;
   }
 };
 
-export default function ({ app, router, store }) {
-  app.config.globalProperties.$axios = axios;
-
+export default boot(({ /* app, */ router, store }) => {
   axios.interceptors.request.use(
     function (config) {
       config.baseURL = getBaseUrl();
-      const token = store.state.token;
+      const token = store.state.value.auth.token;
       if (token != null) {
         config.headers.Authorization = `Token ${token}`;
       }
@@ -61,7 +56,7 @@ export default function ({ app, router, store }) {
           if (typeof error.response.data === "string") {
             text = error.response.data;
           } else if (typeof error.response.data === "object") {
-            let [key, value] = Object.entries(error.response.data)[0];
+            const [key, value] = Object.entries(error.response.data)[0];
             text = key + ": " + value[0];
           }
         }
@@ -81,4 +76,4 @@ export default function ({ app, router, store }) {
       return Promise.reject({ ...error });
     }
   );
-}
+});

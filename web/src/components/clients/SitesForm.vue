@@ -4,7 +4,7 @@
       <q-bar>
         {{ !!site ? `Editing ${site.name}` : "Adding Site" }}
         <q-space />
-        <q-btn dense flat icon="close" v-close-popup>
+        <q-btn v-close-popup dense flat icon="close">
           <q-tooltip class="bg-white text-primary">Close</q-tooltip>
         </q-btn>
       </q-bar>
@@ -15,22 +15,22 @@
             label="Client"
             :options="clientOptions"
             outlined
-            mapOptions
+            map-options
             :rules="[(val) => !!val || 'Client is required']"
             filterable
           />
         </q-card-section>
         <q-card-section>
           <q-input
+            v-model="state.name"
             :rules="[(val) => !!val || 'Name is required']"
             outlined
             dense
-            v-model="state.name"
             label="Name"
           />
         </q-card-section>
 
-        <div class="q-pl-sm text-h6" v-if="customFields.length > 0">
+        <div v-if="customFields.length > 0" class="q-pl-sm text-h6">
           Custom Fields
         </div>
         <q-card-section v-for="field in customFields" :key="field.id">
@@ -38,7 +38,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn dense flat push label="Cancel" v-close-popup />
+          <q-btn v-close-popup dense flat push label="Cancel" />
           <q-btn
             :loading="loading"
             dense
@@ -65,12 +65,11 @@ import { formatCustomFields } from "@/utils/format";
 import { notifySuccess } from "@/utils/notify";
 
 // ui imports
-import CustomField from "@/components/ui/CustomField";
-import TacticalDropdown from "@/components/ui/TacticalDropdown";
+import CustomField from "@/components/ui/CustomField.vue";
+import TacticalDropdown from "@/components/ui/TacticalDropdown.vue";
 
 export default {
   name: "SitesForm",
-  emits: [...useDialogPluginComponent.emits],
   components: {
     CustomField,
     TacticalDropdown,
@@ -79,6 +78,7 @@ export default {
     site: Object,
     client: Number,
   },
+  emits: [...useDialogPluginComponent.emits],
   setup(props) {
     // setup quasar dialog
     const $q = useQuasar();

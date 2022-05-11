@@ -2,19 +2,17 @@
   <q-layout>
     <q-page-container>
       <q-page class="flex bg-image flex-center">
-        <q-card
-          v-bind:style="$q.screen.lt.sm ? { width: '80%' } : { width: '30%' }"
-        >
+        <q-card :style="$q.screen.lt.sm ? { width: '80%' } : { width: '30%' }">
           <q-card-section>
             <div class="text-center q-pt-lg">
               <div class="col text-h4 ellipsis">Tactical RMM</div>
             </div>
           </q-card-section>
           <q-card-section>
-            <q-form @submit.prevent="checkCreds" class="q-gutter-md">
+            <q-form class="q-gutter-md" @submit.prevent="checkCreds">
               <q-input
+                v-model="state.username"
                 filled
-                v-model="credentials.username"
                 label="Username"
                 lazy-rules
                 :rules="[
@@ -22,7 +20,7 @@
                 ]"
               />
               <q-input
-                v-model="credentials.password"
+                v-model="state.password"
                 filled
                 :type="isPwd ? 'password' : 'text'"
                 label="Password"
@@ -31,7 +29,7 @@
                   (val) => (val && val.length > 0) || 'This field is required',
                 ]"
               >
-                <template v-slot:append>
+                <template #append>
                   <q-icon
                     :name="isPwd ? 'visibility_off' : 'visibility'"
                     class="cursor-pointer"
@@ -51,18 +49,18 @@
           </q-card-section>
         </q-card>
         <!-- 2 factor modal -->
-        <q-dialog persistent v-model="prompt">
+        <q-dialog v-model="prompt2fa" persistent>
           <q-card style="min-width: 400px">
-            <q-form @submit.prevent="onSubmit">
+            <q-form @submit.prevent="loginUser">
               <q-card-section class="text-center text-h6"
                 >Two-Factor Token</q-card-section
               >
 
               <q-card-section>
                 <q-input
+                  v-model="twofactor"
                   autofocus
                   outlined
-                  v-model="credentials.twofactor"
                   :rules="[
                     (val) =>
                       (val && val.length > 0) || 'This field is required',
@@ -70,8 +68,8 @@
                 />
               </q-card-section>
 
-              <q-card-actions align="right" class="text-primary">
-                <q-btn flat label="Cancel" v-close-popup />
+              <q-card-actions class="text-primary" align="right">
+                <q-btn v-close-popup flat label="Cancel" />
                 <q-btn flat label="Submit" type="submit" />
               </q-card-actions>
             </q-form>
@@ -82,53 +80,80 @@
   </q-layout>
 </template>
 
-<script>
-import mixins from "@/mixins/mixins";
+<script lang="ts">
+// composition imports
+import { ref, onMounted, defineComponent } from "vue";
+import { useRouter } from "vue-router";
+import { useQuasar } from "quasar";
+import { useAuthStore } from "stores/auth-store";
+import { checkCredentials, login } from "src/api/auth";
 
-export default {
+export default defineComponent({
   name: "LoginView",
-  mixins: [mixins],
-  data() {
+  setup() {
+    // setup quasar
+    const $q = useQuasar();
+
+    // setup router
+    const router = useRouter();
+
+    // setup auth store
+    const store = useAuthStore();
+
+    const state = ref({
+      username: "",
+      password: "",
+    });
+
+    const twofactor = ref("");
+    const isPwd = ref(true);
+    const prompt2fa = ref(false);
+
+    async function checkCreds() {
+      try {
+        const response = await checkCredentials(state.value);
+        if (response.totp === "totp not set") {
+          // sign in to setup two factor temporarily
+          store.setCredentials(response, state.value.username);
+          router.push({ name: "TOTPSetup" });
+        } else {
+          prompt2fa.value = true;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loginUser() {
+      try {
+        const { token } = await login({
+          ...state.value,
+          twofactor: twofactor.value,
+        });
+        store.setCredentials({ token }, state.value.username);
+        router.push({ name: "Dashboard" });
+      } catch (e) {
+        state.value = { username: "", password: "" };
+        prompt2fa.value = false;
+        console.error(e);
+      }
+    }
+
+    onMounted(() => $q.dark.set(true));
+
     return {
-      credentials: {},
-      prompt: false,
-      isPwd: true,
+      // reactive data
+      state,
+      prompt2fa,
+      isPwd,
+      twofactor,
+
+      // methods
+      checkCreds,
+      loginUser,
     };
   },
-
-  methods: {
-    checkCreds() {
-      this.$axios.post("/checkcreds/", this.credentials).then((r) => {
-        if (r.data.totp === "totp not set") {
-          // sign in to setup two factor temporarily
-          const token = r.data.token;
-          const username = r.data.username;
-          localStorage.setItem("access_token", token);
-          localStorage.setItem("user_name", username);
-          this.$store.commit("retrieveToken", { token, username });
-          this.$router.push({ name: "TOTPSetup" });
-        } else {
-          this.prompt = true;
-        }
-      });
-    },
-    onSubmit() {
-      this.$store
-        .dispatch("retrieveToken", this.credentials)
-        .then(() => {
-          this.credentials = {};
-          this.$router.push({ name: "Dashboard" });
-        })
-        .catch(() => {
-          this.credentials = {};
-          this.prompt = false;
-        });
-    },
-  },
-  mounted() {
-    this.$q.dark.set(true);
-  },
-};
+});
 </script>
 
 <style>

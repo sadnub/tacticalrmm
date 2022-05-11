@@ -148,6 +148,7 @@ PROD_URL = "${HTTP_PROTOCOL}://${API_HOST}"
 DEV_URL = "${HTTP_PROTOCOL}://${API_HOST}"
 APP_URL = "https://${APP_HOST}"
 DOCKER_BUILD = 1
+DEV_PORT = ${APP_PORT}
 EOF
 )"
   echo "${webenv}" | tee "${WORKSPACE_DIR}"/web/.env > /dev/null

@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 
 services:
   api-dev:
@@ -9,7 +9,7 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/api.dockerfile
-    command: [ "tactical-api" ]
+    command: ["tactical-api"]
     environment:
       API_PORT: ${API_PORT}
     ports:
@@ -26,8 +26,9 @@ services:
     container_name: trmm-app-dev
     image: node:16-alpine
     restart: always
-    command: /bin/sh -c "npm install npm@latest -g && npm install && npm run serve -- --host 0.0.0.0 --port ${APP_PORT}"
+    command: /bin/sh -c "npm install --cache ~/.npm && npm run serve"
     working_dir: /workspace/web
+    user: 1000:1000
     volumes:
       - ..:/workspace:cached
     ports:
@@ -133,7 +134,7 @@ services:
     container_name: trmm-init-dev
     image: api-dev
     restart: on-failure
-    command: [ "tactical-init-dev" ]
+    command: ["tactical-init-dev"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASS: ${POSTGRES_PASS}
@@ -162,7 +163,7 @@ services:
   celery-dev:
     container_name: trmm-celery-dev
     image: api-dev
-    command: [ "tactical-celery-dev" ]
+    command: ["tactical-celery-dev"]
     restart: always
     user: 1000:1000
     networks:
@@ -178,7 +179,7 @@ services:
   celerybeat-dev:
     container_name: trmm-celerybeat-dev
     image: api-dev
-    command: [ "tactical-celerybeat-dev" ]
+    command: ["tactical-celerybeat-dev"]
     restart: always
     user: 1000:1000
     networks:
@@ -194,7 +195,7 @@ services:
   websockets-dev:
     container_name: trmm-websockets-dev
     image: api-dev
-    command: [ "tactical-websockets-dev" ]
+    command: ["tactical-websockets-dev"]
     restart: always
     user: 1000:1000
     networks:

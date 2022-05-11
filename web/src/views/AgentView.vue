@@ -1,10 +1,10 @@
 <template>
   <q-page>
-    <SummaryTab />
+    <summary-tab />
     <q-separator />
-    <SubTableTabs
+    <sub-table-tabs
       :style="{ height: `${tabHeight + 38}px` }"
-      :activeTabs="[
+      :active-tabs="[
         'checks',
         'tasks',
         'patches',

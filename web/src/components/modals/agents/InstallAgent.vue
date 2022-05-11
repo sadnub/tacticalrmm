@@ -1,189 +1,202 @@
 <template>
-  <q-card style="min-width: 35vw">
-    <q-card-section class="row">
-      <q-card-actions align="left">
-        <div class="text-h6">Add an agent</div>
-      </q-card-actions>
-      <q-space />
-      <q-card-actions align="right">
-        <q-btn v-close-popup flat round dense icon="close" />
-      </q-card-actions>
-    </q-card-section>
-    <q-card-section>
-      <q-form @submit.prevent="addAgent">
-        <q-card-section class="q-gutter-sm">
-          <q-select
-            outlined
-            dense
-            options-dense
-            label="Client"
-            v-model="client"
-            :options="client_options"
-            @update:model-value="site = sites[0]"
-          />
-        </q-card-section>
-        <q-card-section class="q-gutter-sm">
-          <q-select
-            dense
-            options-dense
-            outlined
-            label="Site"
-            v-model="site"
-            :options="sites"
-          />
-        </q-card-section>
-        <q-card-section>
-          <div class="q-gutter-sm">
-            <q-radio
-              v-model="agentOS"
-              val="windows"
-              label="Windows"
-              @update:model-value="
-                installMethod = 'exe';
-                arch = '64';
-              "
-            />
-            <q-radio
-              v-model="agentOS"
-              val="linux"
-              label="Linux"
-              @update:model-value="
-                installMethod = 'linux';
-                arch = 'amd64';
-              "
-            />
-          </div>
-        </q-card-section>
-        <q-card-section>
-          <div class="q-gutter-sm">
-            <q-radio
-              v-model="agenttype"
-              val="server"
-              label="Server"
-              @update:model-value="power = false"
-            />
-            <q-radio
-              v-model="agenttype"
-              val="workstation"
-              label="Workstation"
-            />
-          </div>
-        </q-card-section>
-        <q-card-section>
-          <div class="q-gutter-sm">
-            <q-input
-              v-model.number="expires"
-              dense
-              type="number"
-              filled
-              label="Token expiration (hours)"
-              style="max-width: 200px"
-              stack-label
-            />
-          </div>
-        </q-card-section>
-        <q-card-section v-show="agentOS === 'windows'">
-          <div class="q-gutter-sm">
-            <q-checkbox v-model="rdp" dense label="Enable RDP" />
-            <q-checkbox v-model="ping" dense label="Enable Ping">
-              <q-tooltip>
-                Enable ICMP echo requests in the local firewall
-              </q-tooltip>
-            </q-checkbox>
-            <q-checkbox
-              v-model="power"
-              dense
-              v-show="agenttype === 'workstation'"
-              label="Disable sleep/hibernate"
-            />
-          </div>
-        </q-card-section>
-        <q-card-section>
-          Arch
-          <div class="q-gutter-sm">
-            <q-radio
-              v-model="arch"
-              val="64"
-              label="64 bit"
-              v-show="agentOS === 'windows'"
-            />
-            <q-radio
-              v-model="arch"
-              val="32"
-              label="32 bit"
-              v-show="agentOS === 'windows'"
-            />
-            <q-radio
-              v-model="arch"
-              val="amd64"
-              label="64 bit"
-              v-show="agentOS !== 'windows'"
-            />
-            <q-radio
-              v-model="arch"
-              val="386"
-              label="32 bit"
-              v-show="agentOS !== 'windows'"
-            />
-            <q-radio
-              v-model="arch"
-              val="arm64"
-              label="ARM 64 bit"
-              v-show="agentOS !== 'windows'"
-            />
-            <q-radio
-              v-model="arch"
-              val="arm"
-              label="ARM 32 bit (Rasp Pi)"
-              v-show="agentOS !== 'windows'"
-            />
-          </div>
-        </q-card-section>
-        <q-card-section>
-          Installation Method
-          <div class="q-gutter-sm">
-            <q-radio
-              v-model="installMethod"
-              val="exe"
-              v-show="agentOS === 'windows'"
-              label="Dynamically generated exe"
-            />
-            <q-radio
-              v-model="installMethod"
-              val="powershell"
-              v-show="agentOS === 'windows'"
-              label="Powershell"
-            />
-            <q-radio
-              v-model="installMethod"
-              val="manual"
-              v-show="agentOS === 'windows'"
-              label="Manual"
-            />
-          </div>
-        </q-card-section>
+  <q-dialog ref="dialogRef" @hide="onDialogHide">
+    <q-card style="min-width: 35vw">
+      <q-card-section class="row">
         <q-card-actions align="left">
-          <q-btn :label="installButtonText" color="primary" type="submit" />
+          <div class="text-h6">Add an agent</div>
         </q-card-actions>
-      </q-form>
-    </q-card-section>
-    <q-dialog v-model="showAgentDownload">
-      <AgentDownload :info="info" @close="showAgentDownload = false" />
-    </q-dialog>
-  </q-card>
+        <q-space />
+        <q-card-actions align="right">
+          <q-btn v-close-popup flat round dense icon="close" />
+        </q-card-actions>
+      </q-card-section>
+      <q-card-section>
+        <q-form @submit.prevent="addAgent">
+          <q-card-section class="q-gutter-sm">
+            <q-select
+              v-model="client"
+              outlined
+              dense
+              options-dense
+              label="Client"
+              :options="client_options"
+              @update:model-value="site = sites[0]"
+            />
+          </q-card-section>
+          <q-card-section class="q-gutter-sm">
+            <q-select
+              v-model="site"
+              dense
+              options-dense
+              outlined
+              label="Site"
+              :options="sites"
+            />
+          </q-card-section>
+          <q-card-section>
+            <div class="q-gutter-sm">
+              <q-radio
+                v-model="agentOS"
+                val="windows"
+                label="Windows"
+                @update:model-value="
+                  installMethod = 'exe';
+                  arch = '64';
+                "
+              />
+              <q-radio
+                v-model="agentOS"
+                val="linux"
+                label="Linux"
+                @update:model-value="
+                  installMethod = 'linux';
+                  arch = 'amd64';
+                "
+              />
+            </div>
+          </q-card-section>
+          <q-card-section>
+            <div class="q-gutter-sm">
+              <q-radio
+                v-model="agenttype"
+                val="server"
+                label="Server"
+                @update:model-value="power = false"
+              />
+              <q-radio
+                v-model="agenttype"
+                val="workstation"
+                label="Workstation"
+              />
+            </div>
+          </q-card-section>
+          <q-card-section>
+            <div class="q-gutter-sm">
+              <q-input
+                v-model.number="expires"
+                dense
+                type="number"
+                filled
+                label="Token expiration (hours)"
+                style="max-width: 200px"
+                stack-label
+              />
+            </div>
+          </q-card-section>
+          <q-card-section v-show="agentOS === 'windows'">
+            <div class="q-gutter-sm">
+              <q-checkbox v-model="rdp" dense label="Enable RDP" />
+              <q-checkbox v-model="ping" dense label="Enable Ping">
+                <q-tooltip>
+                  Enable ICMP echo requests in the local firewall
+                </q-tooltip>
+              </q-checkbox>
+              <q-checkbox
+                v-show="agenttype === 'workstation'"
+                v-model="power"
+                dense
+                label="Disable sleep/hibernate"
+              />
+            </div>
+          </q-card-section>
+          <q-card-section>
+            Arch
+            <div class="q-gutter-sm">
+              <q-radio
+                v-show="agentOS === 'windows'"
+                v-model="arch"
+                val="64"
+                label="64 bit"
+              />
+              <q-radio
+                v-show="agentOS === 'windows'"
+                v-model="arch"
+                val="32"
+                label="32 bit"
+              />
+              <q-radio
+                v-show="agentOS !== 'windows'"
+                v-model="arch"
+                val="amd64"
+                label="64 bit"
+              />
+              <q-radio
+                v-show="agentOS !== 'windows'"
+                v-model="arch"
+                val="386"
+                label="32 bit"
+              />
+              <q-radio
+                v-show="agentOS !== 'windows'"
+                v-model="arch"
+                val="arm64"
+                label="ARM 64 bit"
+              />
+              <q-radio
+                v-show="agentOS !== 'windows'"
+                v-model="arch"
+                val="arm"
+                label="ARM 32 bit (Rasp Pi)"
+              />
+            </div>
+          </q-card-section>
+          <q-card-section>
+            Installation Method
+            <div class="q-gutter-sm">
+              <q-radio
+                v-show="agentOS === 'windows'"
+                v-model="installMethod"
+                val="exe"
+                label="Dynamically generated exe"
+              />
+              <q-radio
+                v-show="agentOS === 'windows'"
+                v-model="installMethod"
+                val="powershell"
+                label="Powershell"
+              />
+              <q-radio
+                v-show="agentOS === 'windows'"
+                v-model="installMethod"
+                val="manual"
+                label="Manual"
+              />
+            </div>
+          </q-card-section>
+          <q-card-actions align="left">
+            <q-btn :label="installButtonText" color="primary" type="submit" />
+          </q-card-actions>
+        </q-form>
+      </q-card-section>
+      <q-dialog v-model="showAgentDownload">
+        <AgentDownload :info="info" @close="showAgentDownload = false" />
+      </q-dialog>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script>
+import { useDialogPluginComponent } from "quasar";
 import mixins from "@/mixins/mixins";
-import AgentDownload from "@/components/modals/agents/AgentDownload";
+import AgentDownload from "@/components/modals/agents/AgentDownload.vue";
 import { getBaseUrl } from "@/boot/axios";
 
 export default {
   name: "InstallAgent",
-  mixins: [mixins],
   components: { AgentDownload },
+  mixins: [mixins],
   props: {
     sitepk: Number,
+  },
+  emits: [...useDialogPluginComponent.emits],
+  setup() {
+    // quasar dialog setup
+    const { dialogRef, onDialogHide } = useDialogPluginComponent();
+
+    return {
+      dialogRef,
+      onDialogHide,
+    };
   },
   data() {
     return {
@@ -201,6 +214,33 @@ export default {
       arch: "64",
       agentOS: "windows",
     };
+  },
+  computed: {
+    sites() {
+      return !!this.client ? this.formatSiteOptions(this.client.sites) : [];
+    },
+    installButtonText() {
+      let text;
+      switch (this.installMethod) {
+        case "exe":
+          text = "Generate and download exe";
+          break;
+        case "powershell":
+          text = "Download powershell script";
+          break;
+        case "manual":
+          text = "Show manual installation instructions";
+          break;
+        case "linux":
+          text = "Download linux install script";
+          break;
+      }
+
+      return text;
+    },
+  },
+  mounted() {
+    this.getClients();
   },
   methods: {
     getClients() {
@@ -316,33 +356,6 @@ export default {
               You may reuse this installer for ${this.expires} hours before it expires. No command line arguments are needed.`,
       });
     },
-  },
-  computed: {
-    sites() {
-      return !!this.client ? this.formatSiteOptions(this.client.sites) : [];
-    },
-    installButtonText() {
-      let text;
-      switch (this.installMethod) {
-        case "exe":
-          text = "Generate and download exe";
-          break;
-        case "powershell":
-          text = "Download powershell script";
-          break;
-        case "manual":
-          text = "Show manual installation instructions";
-          break;
-        case "linux":
-          text = "Download linux install script";
-          break;
-      }
-
-      return text;
-    },
-  },
-  mounted() {
-    this.getClients();
   },
 };
 </script>

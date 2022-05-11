@@ -3,7 +3,7 @@ from django.urls import include, path, register_converter
 from knox import views as knox_views
 
 from accounts.views import CheckCreds, LoginView
-from core.consumers import DashInfo
+from core.consumers import MainConnection
 
 
 class AgentIDConverter:
@@ -60,5 +60,5 @@ if getattr(settings, "SWAGGER_ENABLED", False):
     )
 
 ws_urlpatterns = [
-    path("ws/dashinfo/", DashInfo.as_asgi()),  # type: ignore
+    path("ws/", MainConnection.as_asgi()),
 ]

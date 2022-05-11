@@ -217,11 +217,11 @@ class TOTPSetup(APIView):
             user.save(update_fields=["totp_key"])
             return Response(TOTPSetupSerializer(user).data)
 
-        return Response("totp token already set")
+        return notify_error("totp token already set")
 
 
 class UserUI(APIView):
-    def patch(self, request):
+    def put(self, request):
         serializer = UserUISerializer(
             instance=request.user, data=request.data, partial=True
         )

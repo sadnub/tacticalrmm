@@ -7,8 +7,8 @@ export default function () {
   const Store = new createStore({
     state() {
       return {
-        username: localStorage.getItem("user_name") || null,
-        token: localStorage.getItem("access_token") || null,
+        username: localStorage.getItem("user_name") || undefined,
+        token: localStorage.getItem("access_token") || undefined,
         tree: [],
         agents: [],
         treeReady: false,

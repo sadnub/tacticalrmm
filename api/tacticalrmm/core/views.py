@@ -64,7 +64,7 @@ def clear_cache(request):
     return Response("Cache was cleared!")
 
 
-@api_view()
+@api_view(["GET"])
 def dashboard_info(request):
     from tacticalrmm.utils import get_latest_trmm_ver
 

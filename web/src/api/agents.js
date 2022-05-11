@@ -1,6 +1,6 @@
 import axios from "axios";
 import { openURL } from "quasar";
-import { router } from "@/router";
+import router from "src/router";
 
 const baseUrl = "/agents";
 
@@ -131,6 +131,11 @@ export async function runScript(agent_id, payload) {
     `${baseUrl}/${agent_id}/runscript/`,
     payload
   );
+  return data;
+}
+
+export async function bulkMaintenanceMode(payload) {
+  const { data } = await axios.post(`${baseUrl}/maintenance/bulk/`, payload);
   return data;
 }
 

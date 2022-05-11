@@ -4,7 +4,7 @@
       <q-bar>
         Delete {{ object.name }}
         <q-space />
-        <q-btn dense flat icon="close" v-close-popup>
+        <q-btn v-close-popup dense flat icon="close">
           <q-tooltip class="bg-white text-primary">Close</q-tooltip>
         </q-btn>
       </q-bar>
@@ -15,11 +15,11 @@
         </q-card-section>
         <q-card-section v-if="siteOptions.length > 0">
           <tactical-dropdown
+            v-model="site"
             label="Site to move agents to"
             outlined
-            v-model="site"
             :options="siteOptions"
-            mapOptions
+            map-options
             :rules="[
               (val) =>
                 !!val || 'Select the site that the agents should be moved to',
@@ -29,7 +29,7 @@
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn dense flat push label="Cancel" v-close-popup />
+          <q-btn v-close-popup dense flat push label="Cancel" />
           <q-btn
             :loading="loading"
             :disable="siteOptions.length === 0"
@@ -55,11 +55,10 @@ import { fetchClients, removeClient, removeSite } from "@/api/clients";
 import { formatSiteOptions } from "@/utils/format";
 
 // ui imports
-import TacticalDropdown from "@/components/ui/TacticalDropdown";
+import TacticalDropdown from "@/components/ui/TacticalDropdown.vue";
 
 export default {
   name: "DeleteClient",
-  emits: [...useDialogPluginComponent.emits],
   components: {
     TacticalDropdown,
   },
@@ -67,6 +66,7 @@ export default {
     object: !Object,
     type: !String,
   },
+  emits: [...useDialogPluginComponent.emits],
   setup(props) {
     // setup quasar dialog
     const $q = useQuasar();

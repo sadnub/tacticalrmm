@@ -7,27 +7,17 @@
         class="bg-red text-white text-center"
       >
         You are viewing an outdated version of this page.
-        <q-btn
-          color="dark"
-          icon="refresh"
-          label="Refresh"
-          @click="$store.dispatch('reload')"
-        />
+        <q-btn color="dark" icon="refresh" label="Refresh" @click="reload" />
       </q-banner>
       <q-toolbar>
-        <q-btn
-          dense
-          flat
-          @click="$store.dispatch('refreshDashboard')"
-          icon="refresh"
-          v-if="$route.name === 'Dashboard'"
-        />
+        <!-- TODO: Figure out if refresh button is needed -->
+        <q-btn v-if="$route.name === 'Dashboard'" dense flat icon="refresh" />
         <q-btn
           v-else
           dense
           flat
-          @click="$router.push({ name: 'Dashboard' })"
           icon="dashboard"
+          @click="$router.push({ name: 'Dashboard' })"
         >
           <q-tooltip>Back to Dashboard</q-tooltip>
         </q-btn>
@@ -36,13 +26,13 @@
             >v{{ currentTRMMVersion }}</span
           >
           <span
-            class="text-overline q-ml-md"
             v-if="
               latestTRMMVersion !== 'error' &&
               currentTRMMVersion !== latestTRMMVersion
             "
+            class="text-overline q-ml-md"
             ><q-badge color="warning"
-              ><a :href="latestReleaseURL" target="_blank"
+              ><a :href="latestReleaseUrl" target="_blank"
                 >v{{ latestTRMMVersion }} available</a
               ></q-badge
             ></span
@@ -109,21 +99,22 @@
             </q-list>
           </q-menu>
         </q-chip>
+        <!--TODO: -->
+        <!--<AlertsIcon />-->
 
-        <AlertsIcon />
-
-        <q-btn-dropdown flat no-caps stretch :label="user">
+        <q-btn-dropdown flat no-caps stretch :label="username">
           <q-list>
-            <q-item
-              clickable
+            <!-- TODO: -->
+            <!-- <q-item
               v-ripple
-              @click="showUserPreferences"
               v-close-popup
+              clickable
+              @click="showUserPreferences"
             >
               <q-item-section>
                 <q-item-label>Preferences</q-item-label>
               </q-item-section>
-            </q-item>
+            </q-item> -->
             <q-item to="/expired" exact>
               <q-item-section>
                 <q-item-label>Logout</q-item-label>
@@ -138,121 +129,69 @@
     </q-page-container>
   </q-layout>
 </template>
-<script>
+<script lang="ts">
 // composition imports
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { computed, onMounted, onBeforeUnmount, defineComponent } from "vue";
 import { useQuasar } from "quasar";
-import { useStore } from "vuex";
-import axios from "axios";
-import { getBaseUrl } from "@/boot/axios";
+import { useAuthStore } from "stores/auth-store";
+import { useMainStore } from "stores/main-store";
+import { storeToRefs } from "pinia";
+import { editUser } from "api/accounts";
 
 // ui imports
-import AlertsIcon from "@/components/AlertsIcon";
-import UserPreferences from "@/components/modals/coresettings/UserPreferences";
+// import AlertsIcon from "components/AlertsIcon";
+// import UserPreferences from "components/modals/coresettings/UserPreferences";
 
-export default {
+export default defineComponent({
   name: "MainLayout",
-  components: { AlertsIcon },
+  components: {
+    /*AlertsIcon*/
+  },
   setup() {
-    const store = useStore();
+    // setup stores
+    const authStore = useAuthStore();
+    const mainStore = useMainStore();
+
+    // setup quasar
     const $q = useQuasar();
 
     const darkMode = computed({
       get: () => {
         return $q.dark.isActive;
       },
-      set: (value) => {
-        axios.patch("/accounts/users/ui/", { dark_mode: value });
+      set: async (value) => {
+        await editUser({ dark_mode: value });
         $q.dark.set(value);
       },
     });
 
-    const currentTRMMVersion = computed(() => store.state.currentTRMMVersion);
-    const latestTRMMVersion = computed(() => store.state.latestTRMMVersion);
-    const needRefresh = computed(() => store.state.needrefresh);
-    const user = computed(() => store.state.username);
+    const {
+      ws,
+      serverCount,
+      serverOfflineCount,
+      workstationCount,
+      workstationOfflineCount,
+      currentTRMMVersion,
+      latestTRMMVersion,
+      needRefresh,
+      latestReleaseUrl,
+    } = storeToRefs(mainStore);
 
-    const latestReleaseURL = computed(() => {
-      return latestTRMMVersion.value
-        ? `https://github.com/amidaware/tacticalrmm/releases/tag/v${latestTRMMVersion.value}`
-        : "";
-    });
+    const { checkVersion, reload, setupWS } = mainStore;
+    const { username } = storeToRefs(authStore);
 
-    function showUserPreferences() {
-      $q.dialog({
-        component: UserPreferences,
-      }).onOk(() => store.dispatch("getDashInfo"));
-    }
-
-    function wsUrl() {
-      return getBaseUrl().split("://")[1];
-    }
-
-    const serverCount = ref(0);
-    const serverOfflineCount = ref(0);
-    const workstationCount = ref(0);
-    const workstationOfflineCount = ref(0);
-
-    const ws = ref(null);
-
-    function setupWS() {
-      // moved computed token inside the function since it is not refreshing
-      // when ws is closed causing ws to connect with expired token
-      const token = computed(() => store.state.token);
-      console.log("Starting websocket");
-      const proto =
-        process.env.NODE_ENV === "production" || process.env.DOCKER_BUILD
-          ? "wss"
-          : "ws";
-      ws.value = new WebSocket(
-        `${proto}://${wsUrl()}/ws/dashinfo/?access_token=${token.value}`
-      );
-      ws.value.onopen = () => {
-        console.log("Connected to ws");
-      };
-      ws.value.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        serverCount.value = data.total_server_count;
-        serverOfflineCount.value = data.total_server_offline_count;
-        workstationCount.value = data.total_workstation_count;
-        workstationOfflineCount.value = data.total_workstation_offline_count;
-      };
-      ws.value.onclose = (e) => {
-        try {
-          console.log(`Closed code: ${e.code}`);
-          console.log("Retrying websocket connection...");
-          setTimeout(() => {
-            setupWS();
-          }, 3 * 1000);
-        } catch (e) {
-          console.log("Websocket connection closed");
-        }
-      };
-      ws.value.onerror = () => {
-        console.log("There was an error");
-        ws.value.onclose();
-      };
-    }
-
-    const poll = ref(null);
-    function livePoll() {
-      poll.value = setInterval(() => {
-        store.dispatch("checkVer");
-        store.dispatch("getDashInfo", false);
-      }, 60 * 5 * 1000);
-    }
+    // function showUserPreferences() {
+    //   $q.dialog({
+    //     component: UserPreferences,
+    //   }); //.onOk(() => store.dispatch("getDashInfo")); Make this send a command server through WS
+    // }
 
     onMounted(() => {
       setupWS();
-      store.dispatch("getDashInfo");
-      store.dispatch("checkVer");
-
-      livePoll();
     });
 
     onBeforeUnmount(() => {
       ws.value.close();
-      clearInterval(poll.value);
     });
 
     return {
@@ -261,16 +200,18 @@ export default {
       serverOfflineCount,
       workstationCount,
       workstationOfflineCount,
-      latestReleaseURL,
+      latestReleaseUrl,
       currentTRMMVersion,
       latestTRMMVersion,
-      user,
+      username,
       needRefresh,
       darkMode,
 
       // methods
-      showUserPreferences,
+      //showUserPreferences,
+      reload,
+      checkVersion,
     };
   },
-};
+});
 </script>

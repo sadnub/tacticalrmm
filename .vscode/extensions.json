@@ -6,6 +6,8 @@
     "editorconfig.editorconfig",
     "johnsoncodehk.volar",
     "wayou.vscode-todo-highlight",
+    "stylelint.vscode-stylelint",
+    "syler.sass-indented",
 
     // python
     "matangover.mypy",

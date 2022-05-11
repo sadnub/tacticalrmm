@@ -5,11 +5,19 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+// library imports
+import { defineComponent, onMounted } from "vue";
+
+// composition imports
+import { useAuthStore } from "src/stores/auth-store";
+
+export default defineComponent({
   name: "SessionExpired",
-  mounted() {
-    this.$store.dispatch("destroyToken");
+  setup() {
+    const store = useAuthStore();
+
+    onMounted(store.clearCredentials);
   },
-};
+});
 </script>
