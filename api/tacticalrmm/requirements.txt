@@ -38,3 +38,4 @@ validators==0.20.0
 vine==5.0.0
 websockets==10.4
 zipp==3.15.0
+meshctrl==0.1.15

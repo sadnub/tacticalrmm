@@ -60,6 +60,11 @@ if getattr(settings, "SWAGGER_ENABLED", False):
         ),
     )
 
+if getattr(settings, "INTEGRATION_URLS", False):
+    for url, app in settings.INTEGRATION_URLS:  # type: ignore
+        urlpatterns += (path(url, app),)
+
+
 ws_urlpatterns = [
     path("ws/dashinfo/", DashInfo.as_asgi()),
     path("ws/sendcmd/", SendCMD.as_asgi()),

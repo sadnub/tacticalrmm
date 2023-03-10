@@ -116,6 +116,8 @@ class Role(BaseAuditModel):
     can_run_urlactions = models.BooleanField(default=False)
     can_view_customfields = models.BooleanField(default=False)
     can_manage_customfields = models.BooleanField(default=False)
+    can_view_integrations = models.BooleanField(default=False)
+    can_manage_integrations = models.BooleanField(default=False)
 
     # checks
     can_list_checks = models.BooleanField(default=False)

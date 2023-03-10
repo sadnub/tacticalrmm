@@ -19,4 +19,8 @@ urlpatterns = [
     path("smstest/", views.TwilioSMSTest.as_view()),
     path("clearcache/", views.clear_cache),
     path("status/", views.status),
+    path("integrations/", views.GetAddIntegrations.as_view()),
+    path("integrations/<int:pk>/", views.GetUpdateDeleteIntegration.as_view()),
+    path("integrations/<int:pk>/install/", views.InstallIntegration.as_view()),
+    path("integrations/<int:pk>/frontend/", views.GetIntegrationFrontend.as_view()),
 ]

@@ -140,6 +140,20 @@ CHANNEL_LAYERS = {
     },
 }
 
+# check integration settings and import by calling the add method
+if "INTEGRATION_SETTINGS" in globals():
+    import importlib
+
+    importlib.invalidate_caches()
+    for setting in INTEGRATION_SETTINGS:  # type: ignore
+        try:
+            print(setting)
+            settings_module = importlib.import_module(setting)
+            settings_module.add(globals())
+        except:
+            print(f"unable to load settings from {setting}")
+            continue
+
 # silence cache key length warnings
 import warnings  # noqa
 

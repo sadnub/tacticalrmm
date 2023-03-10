@@ -32,3 +32,11 @@ class CustomFieldPerms(permissions.BasePermission):
             return _has_perm(r, "can_view_customfields")
 
         return _has_perm(r, "can_manage_customfields")
+
+
+class IntegrationPerms(permissions.BasePermission):
+    def has_permission(self, r, view) -> bool:
+        if r.method == "GET":
+            return _has_perm(r, "can_view_integrations")
+
+        return _has_perm(r, "can_manage_integrations")

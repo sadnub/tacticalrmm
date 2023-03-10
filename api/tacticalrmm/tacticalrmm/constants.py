@@ -448,3 +448,9 @@ CONFIG_MGMT_CMDS = (
     "meshtoken",
     "meshdomain",
 )
+
+LINUX_NOT_IMPLEMENTED = [
+    {"name": "ScanWindowsUpdates", "methods": ["POST"]},
+    {"name": "GetSoftware", "methods": ["POST", "PUT"]},
+    {"name": "Reboot", "methods": ["PATCH"]},  # TODO implement reboot later
+]

@@ -3,9 +3,11 @@ from pathlib import Path
 
 import psutil
 import pytz
+import requests
+from typing import Union
 from cryptography import x509
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone as djangotime
 from django.views.decorators.csrf import csrf_exempt
@@ -13,6 +15,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from core.decorators import monitoring_view
@@ -26,13 +29,21 @@ from tacticalrmm.permissions import (
     _has_perm_on_site,
 )
 
-from .models import CodeSignToken, CoreSettings, CustomField, GlobalKVStore, URLAction
+from .models import (
+    CodeSignToken,
+    CoreSettings,
+    CustomField,
+    GlobalKVStore,
+    URLAction,
+    Integration,
+)
 from .permissions import (
     CodeSignPerms,
     CoreSettingsPerms,
     CustomFieldPerms,
     ServerMaintPerms,
     URLActionPerms,
+    IntegrationPerms,
 )
 from .serializers import (
     CodeSignTokenSerializer,
@@ -40,6 +51,7 @@ from .serializers import (
     CustomFieldSerializer,
     KeyStoreSerializer,
     URLActionSerializer,
+    IntegrationSerializer,
 )
 
 
@@ -449,3 +461,89 @@ def status(request):
             "nginx": sysd_svc_is_running("nginx.service"),
         }
     return JsonResponse(ret, json_dumps_params={"indent": 2})
+
+
+class GetAddIntegrations(APIView):
+    permission_classes = [IsAuthenticated, IntegrationPerms]
+
+    def get(self, request: Request) -> Response:
+
+        only_enabled = request.query_params.get("onlyEnabled", False)
+        only_enabled = True if only_enabled and only_enabled == "true" else False
+
+        print(only_enabled)
+        if only_enabled:
+            fields = Integration.objects.filter(enabled=True, installed=True)
+            print(fields)
+        else:
+            fields = Integration.objects.all()
+        return Response(IntegrationSerializer(fields, many=True).data)
+
+    def post(self, request: Request) -> Response:
+        serializer = IntegrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
+
+
+class GetUpdateDeleteIntegration(APIView):
+    permission_classes = [IsAuthenticated, IntegrationPerms]
+
+    def get(self, request: Request, pk: int) -> Response:
+        integration = get_object_or_404(Integration, pk=pk)
+
+        return Response(IntegrationSerializer(integration).data)
+
+    def put(self, request: Request, pk: int) -> Response:
+        integration = get_object_or_404(Integration, pk=pk)
+
+        serializer = IntegrationSerializer(
+            instance=integration, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
+
+    def delete(self, request: Request, pk: int) -> Response:
+        get_object_or_404(Integration, pk=pk).delete()
+
+        return Response(pk)
+
+
+class InstallIntegration(APIView):
+    def post(self, request: Request, pk: int) -> Response:
+        import tempfile
+        from importlib.machinery import SourceFileLoader
+
+        integration = get_object_or_404(Integration, pk=pk)
+
+        install_mod = None
+        # TODO: validate codesign token if required
+        if integration.install_url.startswith("http"):
+            with tempfile.NamedTemporaryFile(suffix=".py") as tmp:
+                install_file = requests.get(f"{integration.install_url}/install.py")
+                tmp.write(install_file.content)
+                install_mod = SourceFileLoader("install", tmp.name).load_module()
+        else:
+            install_mod = SourceFileLoader(
+                "install", f"{integration.install_url}/install.py"
+            ).load_module()
+
+        output, success = install_mod.install(settings, integration)
+        return Response({"output": output, "success": success})
+
+
+class GetIntegrationFrontend(APIView):
+    def get(self, request: Request, pk: int) -> Union[Response, FileResponse]:
+        integration = get_object_or_404(Integration, pk=pk)
+
+        if integration.frontend_module_url:
+            try:
+                content = requests.get(integration.frontend_module_url)
+                return FileResponse(content)
+            except:
+                return notify_error("Unable to load frontend code")
+        else:
+            return notify_error("Frontend module url doesn't exist")

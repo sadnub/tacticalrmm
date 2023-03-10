@@ -413,45 +413,14 @@ class URLAction(BaseAuditModel):
         return URLActionSerializer(action).data
 
 
-RUN_ON_CHOICES = (
-    ("client", "Client"),
-    ("site", "Site"),
-    ("agent", "Agent"),
-    ("once", "Once"),
-)
-
-SCHEDULE_CHOICES = (("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly"))
-
-
-""" class GlobalTask(models.Model):
-    script = models.ForeignKey(
-        "scripts.Script",
-        null=True,
-        blank=True,
-        related_name="script",
-        on_delete=models.SET_NULL,
-    )
-    script_args = ArrayField(
-        models.CharField(max_length=255, null=True, blank=True),
-        null=True,
-        blank=True,
-        default=list,
-    )
-    custom_field = models.OneToOneField(
-        "core.CustomField",
-        related_name="globaltask",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    timeout = models.PositiveIntegerField(default=120)
-    retcode = models.IntegerField(null=True, blank=True)
-    stdout = models.TextField(null=True, blank=True)
-    stderr = models.TextField(null=True, blank=True)
-    execution_time = models.CharField(max_length=100, default="0.0000")
-    run_schedule = models.CharField(
-        max_length=25, choices=SCHEDULE_CHOICES, default="once"
-    )
-    run_on = models.CharField(
-        max_length=25, choices=RUN_ON_CHOICES, default="once"
-    ) """
+class Integration(models.Model):
+    name = models.CharField(max_length=25)
+    desc = models.CharField(max_length=100, null=True, blank=True)
+    enabled = models.BooleanField(default=False)
+    version = models.CharField(max_length=20, null=True, blank=True)
+    latest_version = models.CharField(max_length=20, null=True, blank=True)
+    installed = models.BooleanField(default=False)
+    installed_on = models.DateTimeField(null=True, blank=True)
+    update_available = models.BooleanField(default=False)
+    install_url = models.CharField(max_length=255)
+    frontend_module_url = models.CharField(max_length=255, null=True, blank=True)

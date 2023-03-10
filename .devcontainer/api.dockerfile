@@ -18,7 +18,7 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000 8383 8005
 
 RUN apt-get update && \
-    apt-get install -y build-essential
+    apt-get install -y build-essential weasyprint
 
 RUN groupadd -g 1000 tactical && \
     useradd -u 1000 -g 1000 tactical
