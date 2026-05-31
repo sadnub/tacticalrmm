@@ -246,7 +246,7 @@ class GetAddCustomFields(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response("ok")
+        return Response(serializer.data)
 
 
 class GetUpdateDeleteCustomFields(APIView):
@@ -266,7 +266,7 @@ class GetUpdateDeleteCustomFields(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response("ok")
+        return Response(serializer.data)
 
     def delete(self, request, pk):
         get_object_or_404(CustomField, pk=pk).delete()
@@ -379,7 +379,7 @@ class GetAddURLAction(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response("ok")
+        return Response(serializer.data)
 
 
 class UpdateDeleteURLAction(APIView):
@@ -394,7 +394,7 @@ class UpdateDeleteURLAction(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response("ok")
+        return Response(serializer.data)
 
     def delete(self, request, pk):
         get_object_or_404(URLAction, pk=pk).delete()
