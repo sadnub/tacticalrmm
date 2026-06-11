@@ -11,6 +11,7 @@ from .models import Alert, AlertTemplate
 class AlertSerializer(ModelSerializer):
     hostname = ReadOnlyField(source="assigned_agent.hostname")
     agent_id = ReadOnlyField(source="assigned_agent.agent_id")
+    agent_status = ReadOnlyField(source="assigned_agent.status")
     client = ReadOnlyField(source="client.name")
     site = ReadOnlyField(source="site.name")
     alert_time = ReadOnlyField()

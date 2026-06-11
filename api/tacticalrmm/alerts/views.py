@@ -27,10 +27,16 @@ class GetAddAlerts(APIView):
     def patch(self, request):
         # top 10 alerts for dashboard icon
         if "top" in request.data.keys():
+            order = (
+                "-alert_time"
+                if request.data.get("order") == "desc"
+                else "alert_time"
+            )
             alerts = (
                 Alert.objects.filter_by_role(request.user)  # type: ignore
+                .select_related("agent")
                 .filter(resolved=False, snoozed=False, hidden=False)
-                .order_by("alert_time")[: int(request.data["top"])]
+                .order_by(order)[: int(request.data["top"])]
             )
             count = (
                 Alert.objects.filter_by_role(request.user)  # type: ignore
