@@ -76,6 +76,11 @@ class CoreSerializer(HostedCoreMixin, serializers.ModelSerializer):
 
 
 class CustomFieldSerializer(serializers.ModelSerializer):
+    default_value = serializers.SerializerMethodField()
+
+    def get_default_value(self, obj):
+        return obj.default_value
+
     class Meta:
         model = CustomField
         fields = "__all__"
